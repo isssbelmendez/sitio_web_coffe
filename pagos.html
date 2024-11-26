@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Pagos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://sandbox.wompi.co/v1/wompi.js"></script>
+    <style>
+        .card-logo {
+            width: 40px; /* Ajusta el tamaño de la imagen */
+            position: absolute;
+            right: 15px; /* Posición de la imagen */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .form-group {
+            position: relative; /* Para posicionar la imagen correctamente */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Página de Pagos</h1>
+        <form id="payment-form">
+            <div class="form-group">
+                <label for="name">Nombre:</label>
+                <input type="text" class="form-control" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="card-number">Número de tarjeta:</label>
+                <input type="text" class="form-control" id="card-number" required maxlength="19">
+                <img src="" alt="Card Logo" id="card-logo" class="card-logo" style="display:none;">
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="expiry">Fecha de expiración:</label>
+                    <input type="text" class="form-control" id="expiry" placeholder="MM/AA" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="cvv">CVV:</label>
+                    <input type="text" class="form-control" id="cvv" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Pagar</button>
+        </form>
+        <div id="message" class="mt-3 text-center"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const WOMPI_PUBLIC_KEY = 'ce75d626-4b9c-47ae-8c11-7263ab4c42f8'; // Reemplaza con tu clave pública
+
+        document.getElementById('card-number').addEventListener('input', function(e) {
+            const cleaned = e.target.value.replace(/\D/g, '');
+            const formatted = cleaned.replace(/(.{4})/g, '$1 ').trim();
+            e.target.value = formatted;
+
+            const cardLogo = document.getElementById('card-logo');
+
+            if (cleaned.startsWith('4')) {
+                cardLogo.src = 'https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png'; // URL de la imagen de Visa
+                cardLogo.style.display = 'block';
+            } else if (cleaned.startsWith('51') || cleaned.startsWith('52') || cleaned.startsWith('53') || cleaned.startsWith('54') || cleaned.startsWith('55')) {
+                cardLogo.src = 'https://upload.wikimedia.org/wikipedia/commons/5/51/MasterCard_Logo.png'; // URL de la imagen de Mastercard
+                cardLogo.style.display = 'block';
+            } else {
+                cardLogo.style.display = 'none'; // Oculta la imagen si no es una tarjeta válida
+            }
+        });
+
+        document.getElementById('payment-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+            const expiry = document.getElementById('expiry').value.split('/');
+            const cvv = document.getElementById('cvv').value;
+
+            try {
+                const response = await Wompi.createToken({
+                    card: {
+                        number: cardNumber,
+                        cvv: cvv,
+                        expiration_month: expiry[0],
+                        expiration_year: expiry[1]
+                    }
+                });
+
+                const token = response.data.id;
+
+                document.getElementById('message').innerText = `Gracias, ${name}. Tu pago ha sido procesado.`;
+            } catch (error) {
+                console.error(error);
+                document.getElementById('message').innerText = 'Error al procesar el pago. Inténtalo de nuevo.';
+            }
+        });
+    </script>
+</body>
+</html>
